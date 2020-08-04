@@ -1,0 +1,19 @@
+root = true
+
+[*]
+end_of_line = lf
+charset = utf-8
+indent_style = space
+trim_trailing_whitespace = true
+
+[*.{tsx,ts,jsx,js,json}]
+indent_size = 2
+tab_width = 2
+
+[*.cs]
+indent_size = 4
+tab_width = 4
+insert_final_newline = false
+
+[Makefile]
+indent_style = tab

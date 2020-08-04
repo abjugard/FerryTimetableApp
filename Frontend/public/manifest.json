@@ -1,0 +1,15 @@
+{
+  "short_name": "Ferry timetable app",
+  "name": "Ferry timetable app",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "512x512 256x256 192x192 128x128 64x64 32x32 24x24 16x16",
+      "type": "image/svg+xml"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

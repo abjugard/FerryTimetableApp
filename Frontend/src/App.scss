@@ -1,0 +1,77 @@
+.App {
+  text-align: center;
+}
+
+.App-navbar {
+  ul {
+    list-style-type: none;
+    position: fixed;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow: hidden;
+    background-color: #333;
+  }
+
+  li {
+    float: left;
+    a {
+      display: block;
+      color: white;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+      :not(:first-child) {
+        padding-left: 0.5rem;
+      }
+    }
+    a:hover {
+      background-color: #111;
+    }
+    &.end {
+      float: right;
+    }
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+.timetable {
+  font-size: medium;
+  td {
+    font-family: monospace, monospace;
+    padding: 0 1rem;
+    div {
+      text-align: start;
+      :not(:first-child) {
+        padding-left: 0.5rem;
+      }
+    }
+    span:not(.strong) {
+      color: darkgray;
+    }
+    span.strong {
+      font-weight: 800;
+    }
+  }
+}
+
+.route-selector {
+  * {
+    font-size: 34px;
+  }
+}
