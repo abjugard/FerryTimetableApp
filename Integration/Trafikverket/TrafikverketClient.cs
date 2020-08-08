@@ -26,25 +26,38 @@ namespace FerryTimetableApp.Integration.Trafikverket
 
         public async Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetFerryRouteData(string routeName)
         {
-            var query =
-                $@"<FILTER>
-                      <EQ name=""Name"" value=""{routeName}"" />
-                </FILTER>
-                <INCLUDE>Timetable</INCLUDE>";
-
-            return await GetTrafikverketApiResponse(query, 2);
+            return await GetTrafikverketApiResponse(new [] {("Name", routeName)}, 2, "Timetable");
         }
 
         public async Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetFerryRouteNames()
         {
-            return await GetTrafikverketApiResponse("<INCLUDE>Name</INCLUDE>");
+            return await GetTrafikverketApiResponse("Name");
         }
 
-        private async Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetTrafikverketApiResponse(string query, int? limit = null)
+        private async Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetTrafikverketApiResponse(params string[] fields)
         {
-            var limitString = limit.HasValue ? $"limit=\"{limit.ToString()}\" " : "";
+            return await GetTrafikverketApiResponse(null, null, fields);
+        }
 
+        private async Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetTrafikverketApiResponse(
+            (string Name, string Value)[] eqFilters,
+            int? resultLimit,
+            params string[] fields)
+        {
             var client = new HttpClient();
+
+            var auth = Tag("LOGIN", ("authenticationkey", ApiKey));
+
+            var limitValue = resultLimit.HasValue
+                ? resultLimit.ToString()
+                : string.Empty;
+
+            var query = Tag("QUERY",
+                ConstructEqFilter(eqFilters) + ConstructIncludes(fields),
+                ("limit", limitValue), ("objecttype", "FerryRoute"), ("schemaversion", "1.2"));
+
+            var requestContent = Tag("REQUEST", auth + query);
+
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Post,
@@ -53,23 +66,66 @@ namespace FerryTimetableApp.Integration.Trafikverket
                 {
                     {HeaderNames.Referer, Referrer},
                 },
-                Content = new StringContent(
-                    $@"<REQUEST>
-                          <LOGIN authenticationkey=""{ApiKey}"" />
-                          <QUERY {limitString}objecttype=""FerryRoute"" schemaversion=""1.2"">
-                                {query}
-                          </QUERY>
-                    </REQUEST>"
-                )
+                Content = new StringContent(requestContent)
             };
 
             using var response = await client.SendAsync(request);
 
-            response.EnsureSuccessStatusCode();
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
 
             var body = await response.Content.ReadAsStringAsync();
 
             return JsonConvert.DeserializeObject<TrafikverketApiResponse<FerryRouteApiResponse>>(body);
+        }
+
+        private static string ConstructEqFilter((string Name, string Value)[] eqFilters)
+        {
+            if (eqFilters == null)
+            {
+                return "";
+            }
+
+            var filters = eqFilters
+                .Select(filter => Tag("EQ", ("name", filter.Name), ("value", filter.Value)));
+
+            return Tag("FILTER", string.Join("", filters));
+        }
+
+        private static string ConstructIncludes(string[] fields)
+        {
+            var includes = fields
+                .Select(field => Tag("INCLUDE", field));
+
+            return string.Join("", includes);
+        }
+
+        private static string Tag(string tag, params (string Key, string Value)[] attrs)
+        {
+            return Tag(tag, null, attrs);
+        }
+
+        private static string Tag(string tag, string content = null, params (string Key, string Value)[] attrs)
+        {
+            var attrString = string.Join(" ", attrs
+                .Where(attr => !string.IsNullOrEmpty(attr.Value))
+                .Select(attr => $"{attr.Key}=\"{attr.Value}\"")
+            );
+
+            if (!string.IsNullOrEmpty(attrString))
+            {
+                attrString = " " + attrString;
+            }
+
+            var selfClosing = content == null;
+
+            var openTagEnd = selfClosing ? "/" : "";
+
+            var openTag = $"<{tag}{attrString}{openTagEnd}>";
+
+            return selfClosing ? openTag : $"{openTag}{content}</{tag}>";
         }
     }
 }

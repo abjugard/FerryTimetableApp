@@ -8,6 +8,6 @@ namespace FerryTimetableApp.Integration.Trafikverket
     {
         Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetFerryRouteData(string routeName);
 
-        Task<IOrderedEnumerable<string>> GetFerryRouteNames();
+        Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetFerryRouteNames();
     }
 }
