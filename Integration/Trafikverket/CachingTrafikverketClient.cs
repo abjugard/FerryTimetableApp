@@ -12,7 +12,7 @@ namespace FerryTimetableApp.Integration.Trafikverket
     {
         private readonly Dictionary<string, TrafikverketApiResponse<FerryRouteApiResponse>> _cache;
 
-        private IOrderedEnumerable<string> _routeNameCache = null;
+        private TrafikverketApiResponse<FerryRouteApiResponse> _routeNameCache = null;
 
         private readonly TrafikverketClient _client;
 
@@ -37,7 +37,7 @@ namespace FerryTimetableApp.Integration.Trafikverket
             return response;
         }
 
-        public async Task<IOrderedEnumerable<string>> GetFerryRouteNames()
+        public async Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetFerryRouteNames()
         {
             return _routeNameCache ??= await _client.GetFerryRouteNames();
         }

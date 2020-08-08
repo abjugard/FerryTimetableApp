@@ -35,21 +35,9 @@ namespace FerryTimetableApp.Integration.Trafikverket
             return await GetTrafikverketApiResponse(query, 2);
         }
 
-        public async Task<IOrderedEnumerable<string>> GetFerryRouteNames()
+        public async Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetFerryRouteNames()
         {
-            var deserializedResponse = await GetTrafikverketApiResponse("<INCLUDE>Name</INCLUDE>");
-
-            var ferryRouteApiResponse = deserializedResponse
-                .RESPONSE
-                .RESULT
-                .SingleOrDefault()
-                ?.FerryRoute;
-
-            return ferryRouteApiResponse?.Any() == true
-                ? ferryRouteApiResponse
-                    .Select(route => route.Name)
-                    .OrderBy(_ => _)
-                : null;
+            return await GetTrafikverketApiResponse("<INCLUDE>Name</INCLUDE>");
         }
 
         private async Task<TrafikverketApiResponse<FerryRouteApiResponse>> GetTrafikverketApiResponse(string query, int? limit = null)
