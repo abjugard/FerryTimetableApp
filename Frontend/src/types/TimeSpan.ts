@@ -16,16 +16,13 @@ export default class TimeSpan {
 		return new TimeSpan(milliSeconds);
 	}
 
-	static Day(): TimeSpan { return new TimeSpan(MILLISECONDS_IN_A_DAY); }
-	static Hour(): TimeSpan { return new TimeSpan(MILLISECONDS_IN_AN_HOUR); }
-
 	constructor(milliSeconds: number = 0) {
-        this._totalMilliSeconds = 0;
-        this._milliseconds = 0;
+    this._totalMilliSeconds = 0;
+    this._milliseconds = 0;
 		this._seconds = 0;
 		this._minutes = 0;
 		this._hours = 0;
-        this._days = 0;
+    this._days = 0;
 
 		this.milliseconds = milliSeconds;
 	}
@@ -42,7 +39,7 @@ export default class TimeSpan {
 		return date;
 	}
 
-    private _milliseconds: number;
+  private _milliseconds: number;
 	private _totalMilliSeconds: number;
 	private _seconds: number;
 	private _minutes: number;
@@ -138,36 +135,48 @@ export default class TimeSpan {
 		this._hours = newDays.modulu;
 		this._days += newDays.addition;
 
-		this._totalMilliSeconds = this.days * MILLISECONDS_IN_A_DAY + this.hours * MILLISECONDS_IN_AN_HOUR + this.minutes * MILLISECONDS_IN_A_MINUTE
-			+ this.seconds * MILLISECONDS_IN_A_SECOND + this.milliseconds;
+    this._totalMilliSeconds = this.days * MILLISECONDS_IN_A_DAY
+      + this.hours * MILLISECONDS_IN_AN_HOUR
+      + this.minutes * MILLISECONDS_IN_A_MINUTE
+      + this.seconds * MILLISECONDS_IN_A_SECOND
+      + this.milliseconds;
     }
 
-    public toString() {
-        const parts = [
-            { label: 'days', value: this.days },
-            { label: 'hours', value: this.hours },
-            { label: 'minutes', value: this.minutes },
-            { label: 'seconds', value: this.seconds }
-        ].filter(({ value }) => value > 0);
+    public toString(approximateTime = false) {
+      let parts = [
+        { label: 'days', value: this.days },
+        { label: 'hours', value: this.hours },
+        { label: 'minutes', value: this.minutes }
+      ];
 
-        if (parts.length === 0) {
-            return null;
-        }
+      if (!approximateTime) {
+        parts.push({ label: 'seconds', value: this.seconds });
+      }
 
-        if (parts.length === 1) {
-            return this.durationStringPart(parts[0]);
-        }
+      parts = parts.filter(({ value }) => value > 0);
 
-        const tail = this.durationStringPart(parts[parts.length - 1]);
-        const start = parts
-            .slice(0, parts.length - 1)
-            .map(this.durationStringPart)
-            .join(', ');
+      if (parts.length === 0) {
+        return null;
+      }
 
-        return [start, tail].join(' and ');
+      if (approximateTime) {
+        parts[parts.length - 1].value += 1;
+      }
+
+      if (parts.length === 1) {
+        return this.durationStringPart(parts[0]);
+      }
+
+      const tail = this.durationStringPart(parts[parts.length - 1]);
+      const start = parts
+        .slice(0, parts.length - 1)
+        .map(this.durationStringPart)
+        .join(', ');
+
+      return [start, tail].join(' and ');
     }
 
     private durationStringPart(part: ({ label: string, value: number })) {
-        return [part.value, part.label].join(' ');
+      return [part.value, part.label].join(' ');
     }
 }
