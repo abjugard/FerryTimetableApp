@@ -1,14 +1,17 @@
 import React from 'react';
 import { fetchUpcoming } from '../utilities/http';
+import TimeToDeparture from './TimeToDeparture';
 import TimeSpan from '../types/TimeSpan';
-
-class NextDepartureState {
-  public timespan: TimeSpan = new TimeSpan(0);
-  public timetableData: Date[] = [];
-}
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 class NextDepartureProps {
   public ferryRoute!: string;
+}
+
+class NextDepartureState {
+  public timetableData: Date[] = [];
+  public additionalDepartures: number = 0;
 }
 
 export default class NextDeparture extends React.Component<NextDepartureProps, NextDepartureState> {
@@ -20,11 +23,11 @@ export default class NextDeparture extends React.Component<NextDepartureProps, N
   }
 
   componentDidMount() {
+    this.updateTimetableData();
     this.timerID = setInterval(
       () => this.tick(),
-      1000
+      100
     );
-    this.updateTimetableData();
   }
 
   componentWillUnmount() {
@@ -32,16 +35,13 @@ export default class NextDeparture extends React.Component<NextDepartureProps, N
   }
 
   tick() {
-    const now = new Date();
-    const nextDeparture = this.nextDeparture(now);
-
-    if (nextDeparture == null) {
-      return;
+    if (this.state.additionalDepartures < 1) {
+      const next = this.nextDeparture();
+      const ts = TimeSpan.Subtract(next, new Date())
+      if (ts.minutes < 10) {
+        this.addDeparture();
+      }
     }
-
-    this.setState({
-      timespan: TimeSpan.Subtract(nextDeparture, now)
-    });
   }
 
   updateTimetableData() {
@@ -57,13 +57,23 @@ export default class NextDeparture extends React.Component<NextDepartureProps, N
     return futureDepartures?.[0];
   }
 
+  addDeparture() {
+    const additionalDepartures = this.state.additionalDepartures + 1;
+    this.setState({ additionalDepartures });
+  }
+
   render() {
-    const next = this.nextDeparture();
+    const additionalDepartures = Array.from(Array(this.state.additionalDepartures).keys())
+      .map(i => <TimeToDeparture key={`additional-${i+1}`} timetableData={this.state.timetableData} offset={i+1} approximateTime={true}/>);
 
     return (
-      <div>
+      <div className="next-departure">
         <h1>Next departure in:</h1>
-        <h3 title={next?.toLocaleTimeString()}>{this.state.timespan.toString()}</h3>
+        <TimeToDeparture timetableData={this.state.timetableData} offset={0}/>
+        {additionalDepartures}
+        <button onClick={_ => this.addDeparture()} disabled={this.state.additionalDepartures === 4}>
+          <FontAwesomeIcon icon={faPlus}/>
+        </button>
       </div>
     );
   }
