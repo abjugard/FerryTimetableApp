@@ -1,12 +1,12 @@
 using System;
 using System.Linq;
-using FerryTimetableApp.Model;
+using TrafikverketdotNET.Subs.FerryRouteResponse;
 
 namespace FerryTimetableApp.Helpers
 {
     public static class TrafikverketModelExtensions
     {
-        public static bool Contains(this TimetableValidity validity, DateTime dt)
+        public static bool Contains(this Valid validity, DateTime dt)
         {
             return dt.IsBetween(validity.From, validity.To);
         }

@@ -1,4 +1,4 @@
-using FerryTimetableApp.Integration.Trafikverket;
+using FerryTimetableApp.Integration.TrafikverketApi;
 using FerryTimetableApp.Model;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
