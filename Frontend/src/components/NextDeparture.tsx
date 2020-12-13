@@ -1,80 +1,68 @@
-import React from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import { fetchUpcoming } from '../utilities/http';
-import TimeToDeparture from './TimeToDeparture';
+import {TimeToDeparture} from './TimeToDeparture';
 import TimeSpan from '../types/TimeSpan';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
-class NextDepartureProps {
-  public ferryRoute!: string;
+interface Props {
+  ferryRoute: string;
 }
 
-class NextDepartureState {
-  public timetableData: Date[] = [];
-  public additionalDepartures: number = 0;
-}
+export const NextDeparture: React.FC<Props> = ({ferryRoute}) => {
+  const [date, setDate] = useState(new Date())
+  const [timetableData, setTimetableData] = useState<Date[]>([]);
+  const [additionalDepartures, setAdditionalDepartures] = useState(0);
 
-export default class NextDeparture extends React.Component<NextDepartureProps, NextDepartureState> {
-  timerID!: NodeJS.Timeout;
-
-  constructor(props: any) {
-    super(props);
-    this.state = new NextDepartureState();
+  const tick = () => {
+    setDate(new Date());
   }
 
-  componentDidMount() {
-    this.updateTimetableData();
-    this.timerID = setInterval(
-      () => this.tick(),
-      100
-    );
-  }
+  useEffect(() => {
+    fetchUpcoming(ferryRoute)
+      .then(setTimetableData)
+      .then(tick);
+  }, [ferryRoute])
 
-  componentWillUnmount() {
-    clearInterval(this.timerID);
-  }
+  useEffect(() => {
+    const timerID = setInterval(tick, 100 );
+    return () => clearInterval(timerID);
+  });
 
-  tick() {
-    if (this.state.additionalDepartures < 1) {
-      const next = this.nextDeparture();
-      const ts = TimeSpan.Subtract(next, new Date())
-      if (ts.minutes < 10) {
-        this.addDeparture();
-      }
-    }
-  }
-
-  updateTimetableData() {
-    fetchUpcoming(this.props.ferryRoute)
-      .then(timetableData => this.setState({ timetableData }))
-      .then(() => this.tick());
-  }
-
-  nextDeparture(now: Date = new Date()) {
-    const futureDepartures = this.state.timetableData
+  const nextDeparture = useCallback((now: Date = new Date()) => {
+    const futureDepartures = timetableData
       .filter(departure => departure > now);
 
     return futureDepartures?.[0];
-  }
+  }, [timetableData])
 
-  addDeparture() {
-    const additionalDepartures = this.state.additionalDepartures + 1;
-    this.setState({ additionalDepartures });
-  }
+  const addDeparture = useCallback(() => {
+    setAdditionalDepartures(additionalDepartures + 1)
+  }, [additionalDepartures])
 
-  render() {
-    const additionalDepartures = Array.from(Array(this.state.additionalDepartures).keys())
-      .map(i => <TimeToDeparture key={`additional-${i+1}`} timetableData={this.state.timetableData} offset={i+1} approximateTime={true}/>);
+  useMemo(() => {
+    const next = nextDeparture();
+    if (next == null) {
+      return;
+    }
 
-    return (
-      <div className="next-departure">
-        <h1>Next departure in:</h1>
-        <TimeToDeparture timetableData={this.state.timetableData} offset={0}/>
-        {additionalDepartures}
-        <button onClick={_ => this.addDeparture()} disabled={this.state.additionalDepartures === 4}>
-          <FontAwesomeIcon icon={faPlus}/>
-        </button>
-      </div>
-    );
-  }
+    const ts = TimeSpan.Subtract(next, date)
+    if (additionalDepartures < 1 && ts.minutes < 10) {
+      addDeparture();
+    }
+  }, [nextDeparture, addDeparture, additionalDepartures, date])
+
+  const additionalDeparturesComp = Array.from(Array(additionalDepartures).keys())
+    .map(i => <TimeToDeparture key={`additional-${i+1}`} timetableData={timetableData} offset={i+1} approximateTime={true}/>);
+
+  return (
+    <div className="next-departure">
+      <h1>Next departure in:</h1>
+      <TimeToDeparture timetableData={timetableData} offset={0}/>
+      {additionalDeparturesComp}
+      <button onClick={_ => addDeparture()} disabled={additionalDepartures === 4}>
+        <FontAwesomeIcon icon={faPlus}/>
+      </button>
+    </div>
+  );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Route,
   Switch,
@@ -7,17 +7,17 @@ import {
 import './App.scss';
 import { faStopwatch, faCalendarAlt, faCog } from '@fortawesome/free-solid-svg-icons';
 
-import NextDeparture from './components/NextDeparture';
-import FerryRouteSelector from './components/FerryRouteSelector';
-import Timetable from './components/Timetable';
-import NavBarItem from './components/NavBarItem';
+import {NextDeparture} from './components/NextDeparture';
+import {FerryRouteSelector} from './components/FerryRouteSelector';
+import {Timetable} from './components/Timetable';
+import {NavBarItem} from './components/NavBarItem';
 
 function App () {
   const [ferryRoute, setFerryRoute] = useState(
     localStorage.getItem('ferryRoute') || 'Kornhallsleden'
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     localStorage.setItem('ferryRoute', ferryRoute);
   }, [ferryRoute]);
 
@@ -45,10 +45,10 @@ function App () {
       <header className="App-header">
         <Switch>
           <Route exact path="/">
-            <NextDeparture ferryRoute={ferryRoute}></NextDeparture>
+            <NextDeparture ferryRoute={ferryRoute}/>
           </Route>
           <Route path="/timetable">
-            <Timetable ferryRoute={ferryRoute}></Timetable>
+            <Timetable ferryRoute={ferryRoute}/>
           </Route>
           <Route path="/settings">
             <FerryRouteSelector

@@ -1,59 +1,31 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import TimeSpan from '../types/TimeSpan';
 
-class TimeToDepartureProps {
-  public timetableData!: Date[];
-  public offset: number = 0;
-  public approximateTime?: boolean = false;
+interface Props {
+  timetableData: Date[];
+  offset?: number;
+  approximateTime?: boolean;
 }
 
-class TimeToDepartureState {
-  public targetDeparture?: Date;
-  public timespan: TimeSpan = new TimeSpan(0);
-}
+export const TimeToDeparture: React.FC<Props> = ({timetableData, offset = 0, approximateTime = false }) => {
+  const [date, setDate] = useState(new Date())
 
-export default class TimeToDeparture extends React.Component<TimeToDepartureProps, TimeToDepartureState> {
-  timerID!: NodeJS.Timeout;
-
-  constructor(props: TimeToDepartureProps) {
-    super(props);
-    this.state = new TimeToDepartureState();
+  const tick = () => {
+    setDate(new Date());
   }
 
-  componentDidMount() {
-    this.timerID = setInterval(
-      () => this.tick(),
-      100
-    );
-  }
+  useEffect(() => {
+    const timerID = setInterval(tick, 100 );
+    return () => clearInterval(timerID);
+  });
 
-  componentWillUnmount() {
-    clearInterval(this.timerID);
-  }
+  const futureDepartures = timetableData
+    .filter(departure => departure > date);
 
-  getDepartureTime(offset: number = 0, time: Date = new Date()) {
-    const futureDepartures = this.props.timetableData
-      .filter(departure => departure > time);
+  const targetDeparture = futureDepartures?.[offset];
+  const timespan = TimeSpan.Subtract(targetDeparture, date);
 
-    return futureDepartures?.[offset];
-  }
-
-  tick() {
-    const targetDeparture = this.getDepartureTime(this.props.offset);
-
-    if (targetDeparture == null) {
-      return;
-    }
-
-    this.setState({
-      targetDeparture,
-      timespan: TimeSpan.Subtract(targetDeparture, new Date())
-    });
-  }
-
-  render() {
-    return (
-      <h3 title={this.state.targetDeparture?.toLocaleTimeString()}>{this.state.timespan.toString(this.props.approximateTime)}</h3>
-    );
-  }
+  return (
+    <h3 title={targetDeparture?.toLocaleTimeString()}>{timespan.toString(approximateTime)}</h3>
+  );
 }

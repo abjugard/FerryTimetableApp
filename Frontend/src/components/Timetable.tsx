@@ -1,79 +1,65 @@
-import React from 'react';
-import { fetchValidity, fetchDaySchedule } from '../utilities/http';
-import { TimetableValidity } from '../types/TimetableValidity';
+import React, {useEffect, useState} from 'react';
+import {fetchDaySchedule, fetchValidity} from '../utilities/http';
+import {TimetableValidity} from '../types/TimetableValidity';
 
-class TimetableState {
-  public date: Date = new Date();
-  public timetableData: Date[] = [];
-  public validity: TimetableValidity = new TimetableValidity();
-}
+const PaddedNumber: React.FC<{ number: number, strong: boolean }> = ({number, strong}) =>
+  <span className={strong ? 'strong' : undefined}>{ number.toString().padStart(2, '0') }</span>
 
-class TimetableProps {
-  public ferryRoute!: string;
-}
-
-const paddedNumberComponent = (number: number, strong: boolean) =>
-  <span key={number} className={strong ? 'strong' : undefined}>{ number.toString().padStart(2, '0') }</span>
-
-const hourComponent = (hour: number, minutes: number[], next?: Date) => {
+const HourComponent: React.FC<{ hour: number, minutes: number[], next?: Date }> = ({hour, minutes, next }) => {
+  const isCurrent = (minute: number) => hour === next?.getHours() && minute === next.getMinutes();
   const minuteComponents = minutes
     .sort()
-    .map(minute =>
-      paddedNumberComponent(minute, hour === next?.getHours() && minute === next.getMinutes())
-    )
+    .map(minute => <PaddedNumber key={minute} number={minute} strong={isCurrent(minute)} />)
 
   return <tr key={hour}>
-    <td className="hour">{paddedNumberComponent(hour, hour === next?.getHours())}</td>
+    <td className="hour"><PaddedNumber number={hour} strong={hour === next?.getHours()} /></td>
     <td className="minute"><div>{minuteComponents}</div></td>
   </tr>
 };
 
-export default class Timetable extends React.Component<TimetableProps, TimetableState> {
-  constructor(props: any) {
-    super(props);
-    this.state = new TimetableState();
-  }
+interface Props {
+  ferryRoute: string;
+}
 
-  componentDidMount() {
-    this.updateTimetableData();
-    this.updateValidityData();
-  }
+export const Timetable: React.FC<Props> = ({ ferryRoute }) => {
+  const [date, setDate] = useState(new Date())
+  const [timetableData, setTimetableData] = useState<Date[]>([]);
+  const [validity, setValidity] = useState<TimetableValidity>(new TimetableValidity());
 
-  updateTimetableData() {
-    fetchDaySchedule(this.props.ferryRoute, this.state.date)
-      .then(timetableData => this.setState({ timetableData }));
-  }
+  useEffect(() => {
+    fetchValidity(ferryRoute, date)
+      .then(setValidity);
 
-  updateValidityData() {
-    fetchValidity(this.props.ferryRoute, this.state.date)
-      .then(validity => this.setState({ validity }));
-  }
+    fetchDaySchedule(ferryRoute, date)
+      .then(setTimetableData);
+  }, [ferryRoute, date])
 
-  selectDate(date: Date | null) {
+  const selectDate = (date: Date | null) => {
     if (date == null) {
       throw Error('Invalid date selected!');
     }
 
-    if (date < this.state.validity.from) {
-      date = this.state.validity.from;
+    if (date < validity.from) {
+      date = validity.from;
     }
-    if (date > this.state.validity.to) {
-      date = this.state.validity.to;
+    if (date > validity.to) {
+      date = validity.to;
     }
-    this.setState({ date }, this.updateTimetableData);
+
+    setDate(date);
   }
 
-  nextDeparture(now: Date = new Date()) {
-    const futureDepartures = this.state.timetableData
+  const nextDeparture = (now: Date = new Date()) => {
+    const futureDepartures = timetableData
       .filter(departure => departure > now);
 
     return futureDepartures?.[0];
   }
 
-  formatDate(d: Date) {
-    var month = (d.getMonth() + 1).toString();
-    var day = d.getDate().toString();
-    var year = d.getFullYear();
+  const formatDate = (d: Date) => {
+    let month = (d.getMonth() + 1).toString();
+    let day = d.getDate().toString();
+    let year = d.getFullYear();
 
     if (month.length < 2) {
       month = '0' + month;
@@ -84,46 +70,12 @@ export default class Timetable extends React.Component<TimetableProps, Timetable
     }
 
     return [year, month, day].join('-');
-}
-
-  render() {
-    const tableData = this.generateTable();
-
-    const stringDate = this.formatDate(this.state.date);
-
-    const minDate = this.formatDate(this.state.validity.from);
-    const maxDate = this.formatDate(this.state.validity.to);
-
-    return (
-      <div>
-        <div>
-          <input type="date"
-            value={stringDate}
-            onChange={date => this.selectDate(new Date(date.currentTarget.value))}
-            min={minDate} max={maxDate}
-          />
-        </div>
-        <div>
-          <table className="timetable">
-            <thead>
-              <tr>
-                <th className="hour">Hour</th>
-                <th className="minute">Departures</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tableData}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
   }
 
-  generateTable() {
+  const generateTable = () => {
     const table: Map<number, number[]> = new Map();
 
-    this.state.timetableData.reduce(
+    timetableData.reduce(
       (acc, date) => {
         const hour = date.getHours();
         const minute = date.getMinutes();
@@ -142,12 +94,37 @@ export default class Timetable extends React.Component<TimetableProps, Timetable
       table
     );
 
-    const nextDeparture = this.state.date.getUTCDate() === new Date().getUTCDate()
-      ? this.nextDeparture()
+    const next = date.getUTCDate() === new Date().getUTCDate()
+      ? nextDeparture()
       : undefined;
 
-    const tableData = Array.from(table.entries())
-      .map(([hour, minutes]) => hourComponent(hour, minutes, nextDeparture));
-    return tableData;
+    return Array.from(table.entries())
+      .map(([hour, minutes]) => <HourComponent key={hour} hour={hour} minutes={minutes} next={next} />);
   }
+
+  return (
+    <div>
+      <div>
+        <input type="date"
+          value={formatDate(date)}
+          onChange={e => selectDate(new Date(e.currentTarget.value))}
+          min={formatDate(validity.from)}
+          max={formatDate(validity.to)}
+        />
+      </div>
+      <div>
+        <table className="timetable">
+          <thead>
+            <tr>
+              <th className="hour">Hour</th>
+              <th className="minute">Departures</th>
+            </tr>
+          </thead>
+          <tbody>
+            {generateTable()}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
