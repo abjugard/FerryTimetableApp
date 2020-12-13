@@ -1,0 +1,20 @@
+.navbarItem {
+  float: left;
+  a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    :not(:first-child) {
+      padding-left: 0.5rem;
+    }
+  }
+  a:hover {
+    background-color: #111;
+  }
+}
+
+.end {
+  float: right;
+}

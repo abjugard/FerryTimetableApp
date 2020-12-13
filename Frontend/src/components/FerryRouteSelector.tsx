@@ -1,5 +1,5 @@
 import React, {Dispatch, SetStateAction, useEffect, useState} from 'react';
-
+import styles from './FerryRouteSelector.module.scss';
 import { fetchNames } from '../utilities/http';
 
 interface Props {
@@ -22,10 +22,11 @@ export const FerryRouteSelector: React.FC<Props> = ({ ferryRoute, onFerryRouteCh
   )
 
   return (
-    <form className="route-selector">
-      <label htmlFor="select">Select ferry route:</label>
-      <br/>
-      <select name="select" onChange={e => onFerryRouteChanged(e.currentTarget.value)} value={ferryRoute}>
+    <form>
+      <h2>Select ferry route:</h2>
+      <select className={styles.routeSelector}
+              name="select"
+              onChange={e => onFerryRouteChanged(e.currentTarget.value)} value={ferryRoute}>
         {options}
       </select>
     </form>

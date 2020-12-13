@@ -1,4 +1,5 @@
 import React, {useEffect, useState} from 'react';
+import styles from './TimeToDeparture.module.scss';
 import TimeSpan from '../types/TimeSpan';
 
 interface Props {
@@ -26,6 +27,6 @@ export const TimeToDeparture: React.FC<Props> = ({timetableData, offset = 0, app
   const timespan = TimeSpan.Subtract(targetDeparture, date);
 
   return (
-    <h3 title={targetDeparture?.toLocaleTimeString()}>{timespan.toString(approximateTime)}</h3>
+    <h3 className={styles.timeToDeparture} title={targetDeparture?.toLocaleTimeString()}>{timespan.toString(approximateTime)}</h3>
   );
 }

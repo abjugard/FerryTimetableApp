@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import styles from './NextDeparture.module.scss';
 import { fetchUpcoming } from '../utilities/http';
 import {TimeToDeparture} from './TimeToDeparture';
 import TimeSpan from '../types/TimeSpan';
@@ -56,13 +57,15 @@ export const NextDeparture: React.FC<Props> = ({ferryRoute}) => {
     .map(i => <TimeToDeparture key={`additional-${i+1}`} timetableData={timetableData} offset={i+1} approximateTime={true}/>);
 
   return (
-    <div className="next-departure">
-      <h1>Next departure in:</h1>
-      <TimeToDeparture timetableData={timetableData} offset={0}/>
-      {additionalDeparturesComp}
-      <button onClick={_ => addDeparture()} disabled={additionalDepartures === 4}>
+    <>
+      <h1 className={styles.title}>Next departure in:</h1>
+      <div className={styles.timers}>
+        <TimeToDeparture timetableData={timetableData} offset={0}/>
+        {additionalDeparturesComp}
+      </div>
+      <button className={styles.addDeparture} onClick={_ => addDeparture()} disabled={additionalDepartures === 4}>
         <FontAwesomeIcon icon={faPlus}/>
       </button>
-    </div>
+    </>
   );
 }

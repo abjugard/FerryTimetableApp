@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
+import styles from './Timetable.module.scss';
 import {fetchDaySchedule, fetchValidity} from '../utilities/http';
 import {TimetableValidity} from '../types/TimetableValidity';
 
 const PaddedNumber: React.FC<{ number: number, strong: boolean }> = ({number, strong}) =>
-  <span className={strong ? 'strong' : undefined}>{ number.toString().padStart(2, '0') }</span>
+  <span className={strong ? styles.strong : undefined}>{ number.toString().padStart(2, '0') }</span>
 
 const HourComponent: React.FC<{ hour: number, minutes: number[], next?: Date }> = ({hour, minutes, next }) => {
   const isCurrent = (minute: number) => hour === next?.getHours() && minute === next.getMinutes();
@@ -72,38 +73,31 @@ export const Timetable: React.FC<Props> = ({ ferryRoute }) => {
     return [year, month, day].join('-');
   }
 
-  const generateTable = () => {
-    const table: Map<number, number[]> = new Map();
-
-    timetableData.reduce(
-      (acc, date) => {
-        const hour = date.getHours();
-        const minute = date.getMinutes();
-        if (!acc.has(hour)) {
-          acc.set(hour, [minute]);
+  const table = timetableData.reduce(
+    (acc, date) => {
+      const hour = date.getHours();
+      const minute = date.getMinutes();
+      if (!acc.has(hour)) {
+        acc.set(hour, [minute]);
+      }
+      else {
+        const departures = acc.get(hour);
+        if (!departures?.includes(minute)) {
+          departures?.push(minute);
         }
-        else {
-          const departures = acc.get(hour);
-          if (!departures?.includes(minute)) {
-            departures?.push(minute);
-          }
-        }
+      }
 
-        return acc;
-      },
-      table
-    );
+      return acc;
+    },
+    new Map<number, number[]>()
+  );
 
-    const next = date.getUTCDate() === new Date().getUTCDate()
-      ? nextDeparture()
-      : undefined;
-
-    return Array.from(table.entries())
-      .map(([hour, minutes]) => <HourComponent key={hour} hour={hour} minutes={minutes} next={next} />);
-  }
+  const next = date.getUTCDate() === new Date().getUTCDate()
+    ? nextDeparture()
+    : undefined;
 
   return (
-    <div>
+    <>
       <div>
         <input type="date"
           value={formatDate(date)}
@@ -112,19 +106,19 @@ export const Timetable: React.FC<Props> = ({ ferryRoute }) => {
           max={formatDate(validity.to)}
         />
       </div>
-      <div>
-        <table className="timetable">
-          <thead>
-            <tr>
-              <th className="hour">Hour</th>
-              <th className="minute">Departures</th>
-            </tr>
-          </thead>
-          <tbody>
-            {generateTable()}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <table className={styles.timetable}>
+        <thead>
+          <tr>
+            <th className="hour">Hour</th>
+            <th className="minute">Departures</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from(table.entries()).map(([hour, minutes]) => (
+            <HourComponent key={hour} hour={hour} minutes={minutes} next={next} />)
+          )}
+        </tbody>
+      </table>
+    </>
   );
 }

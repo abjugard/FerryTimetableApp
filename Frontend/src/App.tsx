@@ -38,7 +38,7 @@ function App () {
           <NavBarItem
             route="/settings"
             icon={faCog}
-            liClass="end"
+            end
           />
         </ul>
       </div>

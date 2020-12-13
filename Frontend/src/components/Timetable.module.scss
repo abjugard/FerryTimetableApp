@@ -1,0 +1,19 @@
+.timetable {
+  font-size: medium;
+  td {
+    font-family: monospace, monospace;
+    padding: 0 1rem;
+    div {
+      text-align: start;
+      :not(:first-child) {
+        padding-left: 0.5rem;
+      }
+    }
+    span:not(.strong) {
+      color: darkgray;
+    }
+    span.strong {
+      font-weight: 800;
+    }
+  }
+}
