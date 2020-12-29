@@ -26,4 +26,9 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 WORKDIR /app
 EXPOSE 80
 COPY --from=build-env /app/out .
+ENV \
+TZ=Europe/Stockholm \
+LANG=en_GB.UTF-8 \
+LANGUAGE=en_GB.UTF-8 \
+LC_ALL=en_GB.UTF-8
 ENTRYPOINT ["dotnet", "FerryTimetableApp.dll"]
