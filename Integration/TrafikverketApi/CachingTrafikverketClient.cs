@@ -1,43 +1,39 @@
-using System.Collections.Generic;
+using System;
+using Microsoft.Extensions.Caching.Memory;
 using TrafikverketdotNET;
 
 namespace FerryTimetableApp.Integration.TrafikverketApi
 {
-    /// <summary>
-    /// "Caching" 😜
-    /// </summary>
     public class CachingTrafikverketClient : ITrafikverketClient
     {
-        private readonly Dictionary<string, FerryRouteResponse> _cache;
-
-        private FerryRouteResponse _routeNameCache = null;
+        private const string RouteNameCacheKey = "__ROUTE_NAMES__";
 
         private readonly TrafikverketClient _client;
 
-        public CachingTrafikverketClient(TrafikverketClient client)
+        private readonly IMemoryCache _memoryCache;
+
+        public CachingTrafikverketClient(TrafikverketClient client, IMemoryCache memoryCache)
         {
-            _cache = new Dictionary<string, FerryRouteResponse>();
             _client = client;
+            _memoryCache = memoryCache;
         }
 
         public FerryRouteResponse GetFerryRouteData(string routeName)
         {
-            if (_cache.TryGetValue(routeName, out var cachedValue))
+            return _memoryCache.GetOrCreate(routeName, entry =>
             {
-                return cachedValue;
-            }
-
-            var response = _client.GetFerryRouteData(routeName);
-
-            _cache.Remove(routeName);
-            _cache.Add(routeName, response);
-
-            return response;
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+                return _client.GetFerryRouteData(routeName);
+            });
         }
 
         public FerryRouteResponse GetFerryRouteNames()
         {
-            return _routeNameCache ??= _client.GetFerryRouteNames();
+            return _memoryCache.GetOrCreate(RouteNameCacheKey, entry =>
+            {
+                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(1);
+                return _client.GetFerryRouteNames();
+            });
         }
     }
 }
